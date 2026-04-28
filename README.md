@@ -1,3 +1,5 @@
+[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/joshuadanpeterson-enhanced-dash-mcp-badge.png)](https://mseep.ai/app/joshuadanpeterson-enhanced-dash-mcp)
+
 # Enhanced Dash MCP Server
 
 ![Version](https://img.shields.io/badge/version-1.3.1-blue.svg)
