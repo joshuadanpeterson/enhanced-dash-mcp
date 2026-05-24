@@ -1,7 +1,7 @@
 {
-  "name": "Enhanced Dash Documentation Server",
-  "description": "Intelligent access to local Dash documentation with project-aware search, fuzzy matching, and content extraction",
-  "version": "1.0.0",
+  "name": "Enhanced Dash Augmentation Server",
+  "description": "Project-aware Dash MCP augmentation for docset recommendation, search planning, result ranking, and coverage explanations",
+  "version": "2.0.0",
   "author": "Josh (Fort Collins, CO)",
   "repository": "local",
   "license": "MIT",
@@ -11,7 +11,7 @@
     "prompts": false
   },
   "server": {
-    "command": "python3",
+    "command": "$DASH_MCP_DIR/venv/bin/python3",
     "args": [
       "$DASH_MCP_DIR/enhanced_dash_server.py"
     ],
@@ -20,155 +20,85 @@
   },
   "tools": [
     {
-      "name": "search_dash_docs",
-      "description": "Search local Dash documentation with fuzzy matching and content extraction",
-      "category": "documentation",
-      "keywords": ["docs", "search", "api", "reference"]
-    },
-    {
-      "name": "list_docsets",
-      "description": "List all available Dash docsets with metadata",
-      "category": "documentation",
-      "keywords": ["docs", "list", "available"]
-    },
-    {
-      "name": "get_doc_content",
-      "description": "Get full content for a specific documentation entry",
-      "category": "documentation",
-      "keywords": ["docs", "content", "details"]
-    },
-    {
-      "name": "analyze_project_context",
-      "description": "Analyze a project directory to understand its technology stack and dependencies",
+      "name": "analyze_project_docs_context",
+      "description": "Analyze a project directory for docs-relevant language, framework, dependency, and manifest context",
       "category": "project",
       "keywords": ["project", "analyze", "stack", "dependencies"]
     },
     {
-      "name": "get_project_relevant_docs",
-      "description": "Get documentation most relevant to the current project context and query",
+      "name": "recommend_dash_docsets",
+      "description": "Recommend Dash docsets and attach official identifiers from a supplied official snapshot",
+      "category": "documentation",
+      "keywords": ["docs", "docsets", "recommend", "handoff"]
+    },
+    {
+      "name": "plan_dash_searches",
+      "description": "Plan official Dash MCP search_documentation calls for a repo task",
+      "category": "documentation",
+      "keywords": ["docs", "search", "plan", "official-dash"]
+    },
+    {
+      "name": "rank_dash_results",
+      "description": "Rank official Dash MCP search results while preserving load_url values",
+      "category": "documentation",
+      "keywords": ["docs", "rank", "results"]
+    },
+    {
+      "name": "summarize_docset_coverage",
+      "description": "Compare official Dash-visible docsets with valid local cache docsets",
+      "category": "diagnostics",
+      "keywords": ["docs", "coverage", "local-cache", "official"]
+    },
+    {
+      "name": "suggest_offline_docs_for_repo",
+      "description": "Suggest offline docs for a repository using project context and local cache metadata",
       "category": "project",
-      "keywords": ["project", "relevant", "context", "smart-search"]
+      "keywords": ["docs", "offline", "repo"]
     },
     {
-      "name": "get_implementation_guidance",
-      "description": "Get best practices and implementation patterns for a specific feature in your project",
-      "category": "guidance",
-      "keywords": ["best-practices", "patterns", "implementation", "guidance"]
-    },
-    {
-      "name": "get_migration_docs",
-      "description": "Get documentation for migrating or upgrading technology versions",
-      "category": "migration",
-      "keywords": ["migration", "upgrade", "version", "breaking-changes"]
-    },
-    {
-      "name": "get_latest_api_reference",
-      "description": "Get the most current API reference for a specific method or class",
-      "category": "api",
-      "keywords": ["api", "reference", "latest", "methods", "classes"]
+      "name": "explain_missing_docsets",
+      "description": "Explain whether requested docsets are official, local-only, or missing",
+      "category": "diagnostics",
+      "keywords": ["docs", "missing", "docsets"]
     }
   ],
   "configuration": {
-    "cache_ttl": {
-      "description": "Cache time-to-live in seconds",
-      "type": "integer",
-      "default": 3600,
-      "minimum": 300,
-      "maximum": 86400
-    },
-    "fuzzy_threshold": {
-      "description": "Fuzzy search matching threshold (0-100)",
-      "type": "integer",
-      "default": 60,
-      "minimum": 0,
-      "maximum": 100
-    },
-    "content_length_limit": {
-      "description": "Maximum content length to extract",
-      "type": "integer",
-      "default": 5000,
-      "minimum": 1000,
-      "maximum": 20000
-    },
     "docsets_path": {
-      "description": "Path to Dash docsets directory",
+      "description": "Dash root or docsets path. Usually leave unset unless Dash docsets live outside the default location.",
       "type": "string",
-      "default": "~/Library/Application Support/Dash/DocSets"
+      "default": "~/Library/Application Support/Dash"
+    },
+    "index_path": {
+      "description": "Persistent local metadata index path",
+      "type": "string",
+      "default": "~/.cache/dash-mcp/docset-index-v2.json"
     }
   },
   "usage_examples": [
     {
-      "title": "Basic Documentation Search",
-      "description": "Search for specific API documentation",
-      "example": "Search for React useState hook documentation",
-      "tool": "search_dash_docs"
+      "title": "Analyze Project",
+      "description": "Detect repo stack and dependencies",
+      "example": "Analyze this repo's Dash documentation context",
+      "tool": "analyze_project_docs_context"
     },
     {
-      "title": "Project-Aware Search",
-      "description": "Get documentation relevant to your current project",
-      "example": "Find authentication patterns for my React project",
-      "tool": "get_project_relevant_docs"
+      "title": "Plan Official Dash Searches",
+      "description": "Build search_documentation calls for official Dash MCP",
+      "example": "Plan Dash searches for adding FastAPI dependency injection",
+      "tool": "plan_dash_searches"
     },
     {
-      "title": "Implementation Guidance",
-      "description": "Get best practices for implementing features",
-      "example": "How to implement real-time chat with WebSockets in React",
-      "tool": "get_implementation_guidance"
-    },
-    {
-      "title": "Migration Documentation",
-      "description": "Find upgrade and migration guides",
-      "example": "Migration guide from React 17 to React 18",
-      "tool": "get_migration_docs"
-    },
-    {
-      "title": "API Reference",
-      "description": "Get current API documentation with examples",
-      "example": "Latest pandas DataFrame methods with examples",
-      "tool": "get_latest_api_reference"
+      "title": "Explain Coverage Gap",
+      "description": "Compare official Dash-visible docsets with local cache docsets",
+      "example": "Explain why Pydantic is in the local cache but not visible to Dash",
+      "tool": "summarize_docset_coverage"
     }
   ],
-  "supported_technologies": [
-    "JavaScript",
-    "TypeScript",
-    "React",
-    "Next.js",
-    "Vue.js",
-    "Angular",
-    "Node.js",
-    "Express",
-    "Python",
-    "Django",
-    "Flask",
-    "FastAPI",
-    "Pandas",
-    "NumPy",
-    "TensorFlow",
-    "PyTorch",
-    "HTML",
-    "CSS",
-    "Bootstrap",
-    "Tailwind CSS",
-    "MongoDB",
-    "PostgreSQL",
-    "MySQL",
-    "Redis"
-  ],
-  "project_detection": {
-    "javascript": {
-      "files": ["package.json"],
-      "frameworks": ["react", "vue", "angular", "nextjs", "express"]
-    },
-    "python": {
-      "files": ["requirements.txt", "pyproject.toml", "setup.py"],
-      "frameworks": ["django", "flask", "fastapi", "streamlit"]
-    },
-    "web": {
-      "files": ["index.html", "main.css"],
-      "frameworks": ["bootstrap", "tailwind"]
-    }
-  },
   "integration": {
+    "official_dash_mcp": {
+      "boundary": "Official Dash MCP owns list_installed_docsets, search_documentation, enable_docset_fts, and load_documentation_page.",
+      "handoff_schema": "dash-augmentation/v1"
+    },
     "warp_terminal": {
       "compatible": true,
       "features": [
@@ -177,56 +107,12 @@
         "Terminal-based server management",
         "Zsh/Oh-My-Zsh compatibility"
       ]
-    },
-    "development_workflow": {
-      "neovim": "Documentation available while coding",
-      "tmux": "Background server execution",
-      "git": "Project context from repository analysis",
-      "package_managers": "Automatic dependency detection"
     }
   },
   "performance": {
-    "caching": {
-      "memory": "In-memory cache for fast repeated searches",
-      "disk": "Persistent cache in ~/.cache/dash-mcp/",
-      "ttl": "Configurable cache expiration"
-    },
-    "search": {
-      "fuzzy_matching": "Typo-tolerant search with configurable threshold",
-      "content_extraction": "On-demand content parsing",
-      "project_awareness": "Context-based result ranking"
+    "indexing": {
+      "disk": "Persistent metadata index in ~/.cache/dash-mcp/docset-index-v2.json",
+      "invalidates_on": ["DASH_DOCSETS_PATH", "Info.plist mtime", "docSet.dsidx mtime"]
     }
-  },
-  "troubleshooting": {
-    "common_issues": [
-      {
-        "issue": "No docsets found",
-        "solution": "Ensure Dash is installed with downloaded docsets at ~/Library/Application Support/Dash/DocSets"
-      },
-      {
-        "issue": "Permission errors",
-        "solution": "Check file permissions and ensure Python virtual environment is activated"
-      },
-      {
-        "issue": "Import errors",
-        "solution": "Verify all dependencies are installed: pip install -r requirements.txt"
-      },
-      {
-        "issue": "Slow initial searches",
-        "solution": "First search builds cache - subsequent searches will be faster"
-      }
-    ]
-  },
-  "development": {
-    "local_path": "$DASH_MCP_DIR",
-    "environment": "Python virtual environment with dependencies",
-    "startup_scripts": ["start-dash-mcp.sh", "start-dash-mcp-tmux.sh"],
-    "aliases": [
-      "dash-mcp-start",
-      "dash-mcp-attach",
-      "dash-mcp-logs",
-      "dash-mcp-stop",
-      "dash-mcp-status"
-    ]
   }
 }

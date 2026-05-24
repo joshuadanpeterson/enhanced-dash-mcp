@@ -56,7 +56,7 @@ cat > "$WARP_MCP_CONFIG" << EOF
       "config_file": "$DASH_MCP_DIR/warp-mcp-config.json",
       "enabled": true,
       "auto_start": true,
-      "description": "Enhanced Dash Documentation Server with project-aware search"
+      "description": "Enhanced Dash augmentation server with official Dash MCP handoff"
     }
   },
   "global_settings": {

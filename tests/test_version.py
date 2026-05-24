@@ -10,4 +10,4 @@ def test_version_constant():
     content = FILE_PATH.read_text()
     match = VERSION_RE.search(content)
     assert match, "__version__ not found"
-    assert match.group(1) == "1.2.12"
+    assert match.group(1) == "2.0.0"

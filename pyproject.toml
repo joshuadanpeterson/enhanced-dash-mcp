@@ -4,20 +4,22 @@ build-backend = "hatchling.build"
 
 [project]
 name = "enhanced-dash-mcp"
-version = "1.3.1"
-description = "Enhanced Dash Documentation MCP Server with project-aware search"
+version = "2.0.0"
+description = "Dash MCP augmentation server for project-aware docset recommendations"
 authors = [{name = "Josh Peterson", email = "joshuadanpeterson@gmail.com"}]
 requires-python = ">=3.11"
 dependencies = [
     "mcp>=1.9.0",
     "pydantic>=2.0.0",
-    "beautifulsoup4>=4.12.0",
-    "fuzzywuzzy>=0.18.0",
-    "python-levenshtein>=0.27.0",
-    "aiofiles>=24.0.0",
-    "aiohttp>=3.11.0",
-    "rapidfuzz>=3.0.0",
     "typing-extensions>=4.12.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.2.0",
+    "pytest-asyncio>=1.3.0",
+    "flake8",
+    "mypy",
 ]
 
 [project.readme]
@@ -30,3 +32,5 @@ enhanced-dash-mcp = "enhanced_dash_server:main"
 [tool.hatch.build.targets.wheel]
 include = ["enhanced_dash_server.py"]
 
+[tool.pytest.ini_options]
+asyncio_default_fixture_loop_scope = "function"

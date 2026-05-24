@@ -29,39 +29,47 @@ def stub_modules(monkeypatch):
     stub_server.call_tool = call_tool  # type: ignore[attr-defined]
     stub_stdio = types.ModuleType("stdio")
     stub_types = types.ModuleType("types")
-    stub_bs4 = types.ModuleType("bs4")
-    stub_fuzzywuzzy = types.ModuleType("fuzzywuzzy")
-    stub_aiofiles = types.ModuleType("aiofiles")
-    stub_aiohttp = types.ModuleType("aiohttp")
 
     class Tool:  # pragma: no cover - stub
-        pass
+        def __init__(self, **kwargs: Any) -> None:
+            self.__dict__.update(kwargs)
 
     class TextContent:  # pragma: no cover - stub
-        pass
+        def __init__(self, **kwargs: Any) -> None:
+            self.__dict__.update(kwargs)
+
+    class Server:  # pragma: no cover - stub
+        def __init__(self, *_args: Any, **_kwargs: Any) -> None:
+            pass
+
+        def list_tools(self) -> Any:
+            return list_tools()
+
+        def call_tool(self) -> Any:
+            return call_tool()
+
+        def get_capabilities(self) -> dict[str, Any]:
+            return {}
+
+        def create_initialization_options(self) -> dict[str, Any]:
+            return {}
+
+        async def run(self, *_args: Any, **_kwargs: Any) -> None:
+            pass
 
     stub_types.Tool = Tool  # type: ignore[attr-defined]
     stub_types.TextContent = TextContent  # type: ignore[attr-defined]
+    stub_server.Server = Server  # type: ignore[attr-defined]
 
     async def _stdio():  # pragma: no cover - stub
         return ""
 
     stub_stdio.stdio_server = _stdio  # type: ignore[attr-defined]
-    stub_bs4.BeautifulSoup = object  # type: ignore[attr-defined]
-    stub_fuzzywuzzy.fuzz = types.SimpleNamespace(ratio=lambda *_a, **_k: 0)  # type: ignore[attr-defined]
-    stub_fuzzywuzzy.process = types.SimpleNamespace(extract=lambda *_a, **_k: [])  # type: ignore[attr-defined]
-    stub_aiofiles.open = lambda *_a, **_k: None  # type: ignore[attr-defined]
-    stub_aiohttp.ClientSession = object  # type: ignore[attr-defined]
-
     modules = {
         "mcp": stub_mcp,
         "mcp.server": stub_server,
         "mcp.server.stdio": stub_stdio,
         "mcp.types": stub_types,
-        "bs4": stub_bs4,
-        "fuzzywuzzy": stub_fuzzywuzzy,
-        "aiofiles": stub_aiofiles,
-        "aiohttp": stub_aiohttp,
     }
 
     for name, module in modules.items():
