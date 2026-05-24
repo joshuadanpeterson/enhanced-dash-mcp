@@ -6,7 +6,7 @@
         "$DASH_MCP_DIR/enhanced_dash_server.py"
       ],
       "env": {},
-      "description": "Enhanced Dash Documentation Server with project-aware search, fuzzy matching, and content extraction"
+      "description": "Enhanced Dash augmentation server for project-aware docset recommendation and official Dash MCP handoff"
     }
   }
 }

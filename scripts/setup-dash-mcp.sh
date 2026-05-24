@@ -57,6 +57,34 @@ NC='\033[0m' # No Color
 DEFAULT_BASE="$HOME"
 DEFAULT_DIR="${DASH_MCP_DIR:-${DEFAULT_BASE}/enhanced-dash-mcp}"
 
+select_python_bin() {
+    local candidates=()
+    if [ -n "$PYTHON_BIN" ]; then
+        candidates+=("$PYTHON_BIN")
+    fi
+    candidates+=("python3.11" "python" "python3")
+
+    for candidate in "${candidates[@]}"; do
+        if command -v "$candidate" >/dev/null 2>&1; then
+            if "$candidate" -c 'import sys; raise SystemExit(0 if sys.version_info >= (3, 11) else 1)' >/dev/null 2>&1; then
+                echo "$candidate"
+                return 0
+            fi
+        fi
+    done
+
+    return 1
+}
+
+PYTHON_BIN="$(select_python_bin || true)"
+if [ -z "$PYTHON_BIN" ]; then
+    log_error "Python 3.11+ is required for Enhanced Dash MCP v2"
+    echo -e "${RED}❌ Error: Python 3.11+ is required${NC}"
+    echo -e "${YELLOW}Install Python 3.11+ or set PYTHON_BIN=/path/to/python3.11${NC}"
+    exit 1
+fi
+log_step "🐍 Using Python interpreter: $PYTHON_BIN ($($PYTHON_BIN --version 2>&1))"
+
 # Centralized directory selection function
 select_installation_directory() {
     local reason=""
@@ -87,7 +115,7 @@ select_installation_directory() {
     log_step "💬 Prompting user for installation directory (10 second timeout)"
     echo -e "${YELLOW}⏰ You have 10 seconds to respond, or the default will be used${NC}"
     
-    if read -r -t 10 -p "Enter installation directory [${DEFAULT_DIR}]: " INPUT_DIR; then
+    if read -r -p "Enter installation directory [${DEFAULT_DIR}]: " -t 10 INPUT_DIR; then
         DASH_MCP_DIR="${INPUT_DIR:-$DEFAULT_DIR}"
         log_step "✅ User input received: $DASH_MCP_DIR"
     else
@@ -147,11 +175,11 @@ log_step "🐍 Starting Python virtual environment creation"
 echo -e "${BLUE}🐍 Creating Python virtual environment...${NC}"
 cd "$DASH_MCP_DIR"
 log_step "📍 Changed to directory: $(pwd)"
-log_step "🐍 Running: python3 -m venv venv"
-if ! python3 -m venv venv; then
+log_step "🐍 Running: $PYTHON_BIN -m venv venv"
+if ! "$PYTHON_BIN" -m venv venv; then
     log_error "Failed to create virtual environment"
     echo -e "${RED}❌ Error: Failed to create virtual environment${NC}"
-    echo -e "${YELLOW}Try: python3 --version to check Python installation${NC}"
+    echo -e "${YELLOW}Try: $PYTHON_BIN --version to check Python installation${NC}"
     exit 1
 fi
 log_step "✅ Virtual environment created successfully"
@@ -205,7 +233,7 @@ if ! run_pip_with_timeout 300 "install --upgrade pip --no-cache-dir --progress-b
     log_error "Failed to upgrade pip"
     echo -e "${RED}❌ Error: pip upgrade failed${NC}"
     echo -e "${YELLOW}Trying alternative pip upgrade method...${NC}"
-    if ! python3 -m pip install --upgrade pip --no-cache-dir; then
+    if ! python -m pip install --upgrade pip --no-cache-dir; then
         log_error "Alternative pip upgrade also failed"
         echo -e "${RED}❌ Error: Could not upgrade pip${NC}"
         exit 1
@@ -247,18 +275,18 @@ source venv/bin/activate
 
 # Test the server first (for validation and debugging)
 echo "🧪 Testing server configuration..."
-python3 enhanced_dash_server.py --test
+python enhanced_dash_server.py --test
 
 if [ $? -eq 0 ]; then
     echo ""
     echo "🚀 Starting Enhanced Dash MCP Server..."
     echo "📍 Server location: $SCRIPT_DIR"
-    echo "🔗 Connect Claude to: python3 $SCRIPT_DIR/enhanced_dash_server.py"
+    echo "🔗 Connect Claude to: $SCRIPT_DIR/venv/bin/python3 $SCRIPT_DIR/enhanced_dash_server.py"
     echo "ℹ️  Note: Server will wait for JSON-RPC input from MCP client (Claude)"
     echo "   Press Ctrl+C to stop the server"
     echo ""
     
-    python3 enhanced_dash_server.py
+    python enhanced_dash_server.py
 else
     echo "❌ Server test failed. Please check the configuration and try again."
     exit 1
@@ -288,7 +316,7 @@ fi
 echo "🧪 Testing server configuration..."
 cd "$SCRIPT_DIR"
 source venv/bin/activate
-python3 enhanced_dash_server.py --test
+python enhanced_dash_server.py --test
 
 if [ $? -eq 0 ]; then
     # Create new tmux session
@@ -319,7 +347,7 @@ cat > configs/claude-mcp-config.json << EOF
       "command": "$DASH_MCP_DIR/venv/bin/python3",
       "args": ["$DASH_MCP_DIR/enhanced_dash_server.py"],
       "env": {},
-      "description": "Enhanced Dash Documentation Server with project-aware search"
+      "description": "Enhanced Dash augmentation server for official Dash MCP handoff"
     }
   }
 }
@@ -355,17 +383,16 @@ echo -e "${BLUE}📚 Creating usage documentation...${NC}"
 cat > README.md << 'EOF'
 # Enhanced Dash MCP Server
 
-An intelligent Model Context Protocol server that provides Claude with seamless access to your local Dash documentation.
+An intelligent Model Context Protocol server that augments the official Dash MCP with project-aware docset recommendations, search planning, ranking, and coverage explanations.
 
 ## Features
 
-- **Intelligent Caching**: Fast search with memory + disk caching
-- **Content Extraction**: Clean text from HTML/Markdown documentation
-- **Fuzzy Search**: Typo-tolerant search with intelligent ranking
-- **Project Awareness**: Context-aware documentation based on your project
-- **Implementation Guidance**: Best practices and patterns for features
-- **Migration Support**: Version upgrade documentation
-- **Latest API Reference**: Current API docs with examples
+- **Project Awareness**: Detect languages, frameworks, dependencies, and manifests
+- **Docset Recommendation**: Recommend Dash docsets for the repo and task
+- **Official Dash Handoff**: Return identifiers and search_documentation plans
+- **Result Ranking**: Rank official Dash MCP search results without loading pages
+- **Coverage Explanations**: Compare official Dash-visible docsets with local cache docsets
+- **Persistent Metadata Index**: Cache local docset metadata in docset-index-v2.json
 
 ## Quick Start
 
@@ -379,21 +406,20 @@ An intelligent Model Context Protocol server that provides Claude with seamless 
 
 3. **Use with Claude:**
    ```
-   "Search for React useState hook documentation"
-   "Get implementation guidance for user authentication in my React project"
-   "Find migration docs for upgrading from React 17 to 18"
+   "Analyze this repo's Dash documentation context"
+   "Recommend Dash docsets for this FastAPI task"
+   "Plan official Dash searches for React auth patterns"
    ```
 
 ## Available Tools
 
-- `search_dash_docs` - Basic documentation search
-- `list_docsets` - List available documentation sets
-- `get_doc_content` - Get full content for specific documentation
-- `analyze_project_context` - Analyze project tech stack
-- `get_project_relevant_docs` - Context-aware documentation search
-- `get_implementation_guidance` - Best practices for features
-- `get_migration_docs` - Version upgrade documentation
-- `get_latest_api_reference` - Current API reference with examples
+- `analyze_project_docs_context` - Analyze project tech stack
+- `recommend_dash_docsets` - Recommend Dash docsets and identifiers
+- `plan_dash_searches` - Plan official Dash MCP search_documentation calls
+- `rank_dash_results` - Rank official Dash MCP search results
+- `summarize_docset_coverage` - Explain official/local cache coverage
+- `suggest_offline_docs_for_repo` - Suggest repo-specific offline docs
+- `explain_missing_docsets` - Explain official, local-only, or missing docsets
 
 ## Shell Aliases
 
@@ -433,7 +459,7 @@ log_step "🧪 Running final validation test"
 echo -e "${BLUE}🧪 Testing server installation...${NC}"
 
 # Run test and capture both exit code and output
-test_output=$(python3 enhanced_dash_server.py --test 2>&1)
+test_output=$(python enhanced_dash_server.py --test 2>&1)
 test_exit_code=$?
 
 # Display test output

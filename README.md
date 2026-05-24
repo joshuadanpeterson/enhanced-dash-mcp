@@ -1,16 +1,16 @@
 # Enhanced Dash MCP Server
 
-![Version](https://img.shields.io/badge/version-1.3.1-blue.svg)
-![Python](https://img.shields.io/badge/python-3.8+-green.svg)
+![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)
+![Python](https://img.shields.io/badge/python-3.11+-green.svg)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Platform](https://img.shields.io/badge/platform-macOS-lightgrey.svg)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/joshuadanpeterson/enhanced-dash-mcp)
 
 ## 🎯 What is this?
 
-This is a **Model Context Protocol (MCP)** server that bridges [Dash](https://kapeli.com/dash) - the popular offline API documentation browser for macOS - with Claude Desktop and other agentic development environments. MCP is an open protocol that enables AI assistants like Claude and Warp to securely access local resources and tools on your computer through structured APIs.
+This is a **Model Context Protocol (MCP)** server that augments the official [Dash](https://kapeli.com/dash) MCP server. The official Dash MCP owns exact Dash-backed operations: installed docsets, precise documentation search, full-text search, and page loading. Enhanced Dash MCP owns the higher-level intelligence around those operations: project context, docset recommendation, local cache discovery, routing, ranking, and workflow guidance.
 
-**In simple terms:** This server lets Claude and other agentic coding tools instantly search and read your local Dash documentation (200+ API docs, cheat sheets, and guides) to provide accurate, version-specific answers based on the actual documentation you have installed - all offline, private, and blazing fast.
+**In simple terms:** this server tells Claude and other agentic coding tools which Dash docsets and `search_documentation` queries to use for the repo and task in front of them. The official Dash MCP still fetches the search results and documentation pages.
 
 ## 📚 About Dash
 
@@ -18,11 +18,11 @@ This is a **Model Context Protocol (MCP)** server that bridges [Dash](https://ka
 
 ## 🔗 Why This Integration Matters
 
-- **Offline-First**: Access all your documentation without internet connectivity
-- **Version-Specific**: Get answers based on the exact versions of libraries you have installed
-- **Privacy-Focused**: Your code context and queries never leave your machine
-- **Lightning Fast**: Sub-second searches through gigabytes of documentation
-- **Context-Aware**: Claude understands your project stack and suggests relevant docs automatically
+- **Official Dash Handoff**: returns docset identifiers and ready-to-run `search_documentation` calls when you provide a `list_installed_docsets` snapshot
+- **Local Cache Awareness**: indexes valid local Dash cache docsets and explains which ones the official Dash MCP cannot see
+- **Privacy-Focused**: project inspection and local cache discovery stay on your machine
+- **Persistent Metadata Index**: stores docset metadata in `~/.cache/dash-mcp/docset-index-v2.json` so cold discovery is not repeated unnecessarily
+- **Context-Aware**: detects a repo's stack and suggests relevant Dash docsets automatically
 
 See [CHANGELOG.md](CHANGELOG.md) for version history.
 
@@ -30,13 +30,12 @@ See [CHANGELOG.md](CHANGELOG.md) for version history.
 
 ### **Core Capabilities**
 
-- **🔍 Intelligent Search** - Fuzzy matching with typo tolerance and smart ranking
-- **📚 Content Extraction** - Clean text extraction from HTML, Markdown, and text docs
-- **⚡ Multi-Tier Caching** - Memory + disk caching for lightning-fast repeated searches
-- **🎯 Project Awareness** - Automatically detects your tech stack and prioritizes relevant docs
-- **🛠️ Implementation Guidance** - Best practices and patterns for specific features
-- **📈 Migration Support** - Version upgrade documentation and breaking changes
-- **🔄 Latest API Reference** - Current API docs with practical examples
+- **Project Context Analysis** - detects languages, frameworks, dependencies, manifests, and common source files
+- **Docset Recommendation** - recommends exact Dash docsets for a repo or supplied context
+- **Search Planning** - produces official Dash MCP `search_documentation` query plans
+- **Result Ranking** - re-ranks official Dash search results without loading page content
+- **Coverage Summaries** - compares official Dash-visible docsets with valid local cache docsets
+- **Missing Docset Explanations** - explains whether a requested docset is official, local-only, or absent
 
 ### **Developer Workflow Integration**
 
@@ -53,7 +52,7 @@ JavaScript/TypeScript, React, Next.js, Vue.js, Angular, Node.js, Python, Django,
 ## 📋 Prerequisites
 
 - **macOS** with Dash app installed
-- **Python 3.8+** (Python 3.11+ recommended)
+- **Python 3.11+**
 - **Dash docsets** downloaded (JavaScript, Python, React, etc.)
 - **Claude** with MCP support
 - **tmux** (recommended for background execution)
@@ -80,23 +79,26 @@ The setup script automatically installs all required dependencies, including:
 
 - `mcp>=1.9.0` - Model Context Protocol framework
 - `pydantic>=2.0.0` - Data validation (required for MCP compatibility)
-- `beautifulsoup4>=4.12.0` - HTML content extraction
-- `fuzzywuzzy>=0.18.0` - Fuzzy string matching
-- `python-levenshtein>=0.27.0` - Fast string similarity
-- `aiofiles>=24.0.0` - Async file operations
-- `aiohttp>=3.11.0` - Async HTTP client
-- `rapidfuzz>=3.0.0` - Enhanced fuzzy matching
 - `typing-extensions>=4.12.0` - Extended type hints
 
 ## ⚡ Quick Start
 
-### 🔄 **Important: Cache Clearing for Existing Users**
+### 🔄 **Important: v2 Boundary Change**
 
-**If you're upgrading from a previous version**, the server now discovers 8x more docsets (364 instead of 45) by searching the entire Dash directory tree. To see all the new docsets, clear the cache:
+**If you're upgrading from a previous version**, Enhanced Dash MCP no longer exposes direct search/page loading tools. Use the official Dash MCP for:
+
+- `list_installed_docsets`
+- `search_documentation`
+- `enable_docset_fts`
+- `load_documentation_page`
+
+Use Enhanced Dash MCP for repo-aware recommendations, search planning, ranking, coverage summaries, and missing-docset explanations.
+
+To rebuild the v2 metadata index:
 
 ```bash
-# Clear the docset cache to discover newly available docsets
-rm -rf ~/.cache/dash-mcp/
+# Clear the metadata index
+rm -f ~/.cache/dash-mcp/docset-index-v2.json
 
 # Then restart your server
 dash-mcp-restart
@@ -104,10 +106,7 @@ dash-mcp-restart
 cd ~/enhanced-dash-mcp && ./start-dash-mcp.sh --test
 ```
 
-**What changed:**
-- **Before**: Searched only `~/Library/Application Support/Dash/DocSets/` (45 docsets)
-- **After**: Searches entire `~/Library/Application Support/Dash/` directory (364 docsets)
-- **Benefit**: Now includes User Contributed, Python DocSets, Versioned DocSets, and more!
+**What changed:** Enhanced Dash MCP now reports local cache docsets only as metadata and fallback diagnostics. It does not fetch documentation pages.
 
 See [docs/help.md](docs/help.md) for a brief overview of how to run the server.
 
@@ -222,8 +221,8 @@ dash-mcp-start              # Start server in tmux
 dash-mcp-status             # Check if running
 dash-mcp-logs               # View server output
 enhanced-dash-mcp-for-project       # Analyze current project
-dash-api-lookup <api> <tech> # Quick API reference
-dash-best-practices <feature> # Implementation guidance
+dash-api-lookup <api> <tech> # Plan official Dash MCP searches
+dash-best-practices <feature> # Recommend docsets and search routes
 dash-help                   # Show all commands
 ```
 
@@ -238,28 +237,18 @@ Add MCP server status to your prompt:
 
 ## 🔧 Configuration
 
-### **Cache Settings**
+### **Metadata Index Settings**
 
 ```python
-# Default cache TTL: 1 hour
-# Cache location: ~/.cache/dash-mcp/
-# Memory + disk caching for optimal performance
+# Default index: ~/.cache/dash-mcp/docset-index-v2.json
+# Test override: DASH_MCP_INDEX_PATH=/tmp/docset-index.json
+# Rebuild: pass force_refresh=true to recommendation/coverage tools
 ```
 
-### **Fuzzy Search Tuning**
+### **Official Dash Snapshot**
 
-```python
-# Default threshold: 60% match
-# Adjustable in server configuration
-# Typo tolerance with intelligent ranking
-```
-
-### **Content Extraction Limits**
-
-```python
-# Default: 5000 characters per document
-# Configurable for performance vs. detail trade-off
-```
+Pass the official Dash MCP `list_installed_docsets` response to Enhanced Dash
+tools when you want exact official docset identifiers in the handoff envelope.
 
 ## 🤖 Automation & Non-Interactive Operation
 
@@ -370,7 +359,7 @@ Clean environment setup: ~70-75 seconds
 #### **Optimization for Automation**
 - **Parallel Operations**: Concurrent docset scanning and validation
 - **Smart Caching**: Persistent cache survives container restarts
-- **Lazy Loading**: On-demand content extraction
+- **Official Handoff**: enhanced tools plan work, then official Dash MCP loads pages
 - **Memory Management**: Automatic cleanup of large operations
 
 ### **🛠️ Automation Testing**
@@ -425,7 +414,7 @@ args:
   - |
     cd /app/enhanced-dash-mcp
     KUBERNETES_SERVICE_HOST=true ./scripts/setup-dash-mcp.sh
-    python3 enhanced_dash_server.py --test
+    ./venv/bin/python3 enhanced_dash_server.py --test
 ```
 
 ### **🔍 Debugging Automation Issues**
@@ -434,7 +423,7 @@ args:
 ```bash
 # View detailed environment detection logs
 export DASH_MCP_LOG_LEVEL=DEBUG
-python3 enhanced_dash_server.py --test
+./venv/bin/python3 enhanced_dash_server.py --test
 
 # Check automation detection reasoning
 grep "Detection reason" ~/.cache/dash-mcp/server.log
@@ -459,68 +448,52 @@ export DASH_MCP_DEBUG_PROCESS=true
 
 ### **Core Components**
 
-- **DashMCPServer** - Main server orchestrating all components
-- **CacheManager** - Multi-tier caching (memory + disk)
-- **ContentExtractor** - Clean text extraction from various formats
-- **FuzzySearchEngine** - Intelligent search with ranking algorithms
-- **ProjectAwareDocumentationServer** - Context-aware documentation selection
+- **DashMCPServer** - Internal local-cache metadata indexer
+- **DashAugmentationServer** - Project-aware recommendation and handoff planner
+- **OfficialDocsetIndex** - Optional official Dash snapshot matcher
+- **ProjectDocsContext** - Repo context model for languages, frameworks, dependencies, and manifests
 
 ### **Data Flow**
 
-1. **Query received** from Claude via MCP
-2. **Project context** analyzed (language, framework, dependencies)
-3. **Relevant docsets** identified and prioritized
-4. **Fuzzy search** performed with intelligent ranking
-5. **Content extracted** and cached for future requests
-6. **Results returned** with project-specific scoring
+1. **Task or repo path received** from Claude via MCP
+2. **Project context** analyzed from manifests and source files
+3. **Relevant docsets** identified and matched against the optional official snapshot
+4. **Official Dash search plans** generated with identifiers when available
+5. **Local-only cache gaps** explained only when official Dash cannot see the docset
+6. **Handoff envelope returned** for the caller to run official Dash MCP operations
 
 ### **Caching Strategy**
 
-- **Memory Cache** - Instant access for recently searched items
-- **Disk Cache** - Persistent storage surviving server restarts
-- **Smart Expiration** - 1-hour TTL with automatic cleanup
-- **Cache Keys** - Generated from search parameters for optimal hit rates
+- **Persistent Metadata Index** - Stores local docset metadata, not page content
+- **Mtime Invalidation** - Rebuilds when the Dash root, `Info.plist`, or `docSet.dsidx` changes
+- **Force Refresh** - Recommendation and coverage tools accept `force_refresh=true`
 
 ## 📊 Performance
 
 ### **Benchmarks**
 
-- **First search**: ~500ms (includes docset scanning)
-- **Cached searches**: ~50ms (memory cache hits)
-- **Content extraction**: +200-300ms (when requested)
-- **Fuzzy matching**: Minimal overhead with significant quality improvement
+- **First metadata index**: depends on Dash cache size and docset count
+- **Cached metadata reads**: fast JSON load from `docset-index-v2.json`
+- **Official search/page loading**: handled by the official Dash MCP, not this server
 
 ### **Optimization Tips**
 
 - Keep server running in tmux for best performance
-- Initial searches per docset are slower (cache building)
-- Content extraction adds latency but provides much richer context
-- Memory cache provides fastest repeated access
+- Pass an official Dash docset snapshot when you need exact identifiers
+- Use `force_refresh=false` for routine recommendations
+- Use `force_refresh=true` only after installing or moving docsets
 
 ## 🔍 Available Tools
 
-### **Core Search Tools**
-
-| Tool               | Description                                    | Use Case                         |
-| ------------------ | ---------------------------------------------- | -------------------------------- |
-| `search_dash_docs` | Basic documentation search with fuzzy matching | General API/concept lookup       |
-| `list_docsets`     | Show all available documentation sets          | Discover available documentation |
-| `get_doc_content`  | Get full content for specific documentation    | Deep dive into specific topics   |
-
-### **Project-Aware Tools**
-
-| Tool                          | Description                                | Use Case                           |
-| ----------------------------- | ------------------------------------------ | ---------------------------------- |
-| `analyze_project_context`     | Detect project tech stack and dependencies | Understand current project         |
-| `get_project_relevant_docs`   | Context-aware documentation search         | Find docs relevant to your project |
-| `get_implementation_guidance` | Best practices for specific features       | Implementation planning            |
-
-### **Specialized Tools**
-
-| Tool                       | Description                    | Use Case                         |
-| -------------------------- | ------------------------------ | -------------------------------- |
-| `get_migration_docs`       | Version upgrade documentation  | Planning upgrades and migrations |
-| `get_latest_api_reference` | Current API docs with examples | Quick reference while coding     |
+| Tool                           | Description                                      | Use Case                         |
+| ------------------------------ | ------------------------------------------------ | -------------------------------- |
+| `analyze_project_docs_context` | Detect repo stack, manifests, and dependencies   | Understand current project       |
+| `recommend_dash_docsets`       | Recommend official/local Dash docsets            | Choose docs for a task           |
+| `plan_dash_searches`           | Build official `search_documentation` calls      | Prepare Dash MCP handoff         |
+| `rank_dash_results`            | Rank official Dash search results                | Prioritize fetched candidates    |
+| `summarize_docset_coverage`    | Compare official-visible and local-cache docsets | Explain app/cache gap            |
+| `suggest_offline_docs_for_repo`| Suggest repo-specific offline docs               | Bootstrap project docs workflow  |
+| `explain_missing_docsets`      | Explain official/local/missing docset status     | Diagnose missing docs            |
 
 ## 🚨 Troubleshooting
 
@@ -545,7 +518,7 @@ ls ~/Library/Application\ Support/Dash/DocSets/
 
 ```bash
 # Check Python environment
-which python3
+python --version
 source ~/enhanced-dash-mcp/venv/bin/activate
 ```
 
@@ -594,12 +567,12 @@ git clone <repository-url>
 cd enhanced-dash-mcp
 
 # Create development environment
-python3 -m venv dev-env
+python -m venv dev-env
 source dev-env/bin/activate
 pip install -r requirements.txt
 
 # Install development dependencies
-pip install pytest black flake8 mypy
+pip install -e ".[dev]"
 ```
 
 ### **Running Tests**
@@ -616,10 +589,10 @@ mypy .    # uses settings from mypy.ini
 
 ### **Adding New Features**
 
-1. **Docset Support** - Add new file format extractors in `ContentExtractor`
-2. **Search Algorithms** - Enhance ranking in `FuzzySearchEngine`
-3. **Project Detection** - Extend framework detection in `ProjectAwareDocumentationServer`
-4. **Caching Strategies** - Optimize cache management in `CacheManager`
+1. **Docset Matching** - Add aliases in `aliases_for_name`
+2. **Ranking** - Enhance `rank_results` with more result fields
+3. **Project Detection** - Extend manifest parsing in `DashAugmentationServer`
+4. **Indexing** - Extend local metadata in `DashMCPServer`
 
 ## 📄 License
 

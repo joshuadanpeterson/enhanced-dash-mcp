@@ -16,4 +16,4 @@ def test_changelog_header_present():
 def test_latest_release_at_top():
     """Ensure the latest version entry is directly below the header."""
     lines = [line.strip() for line in CHANGELOG.read_text().splitlines()]
-    assert lines[1].startswith("## [1.2.12]"), "Latest release is not at the top"
+    assert lines[1].startswith("## [2.0.0]"), "Latest release is not at the top"

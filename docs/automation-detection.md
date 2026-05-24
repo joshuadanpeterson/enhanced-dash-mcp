@@ -318,13 +318,13 @@ export DASH_MCP_LOG_FILE=/custom/path/server.log
 
 ```bash
 # Test mode - validates setup without starting server
-python3 enhanced_dash_server.py --test
+./venv/bin/python3 enhanced_dash_server.py --test
 
 # Normal mode - runs server with stdio streams
-python3 enhanced_dash_server.py
+./venv/bin/python3 enhanced_dash_server.py
 
 # CI mode (forced via environment)
-CI=true python3 enhanced_dash_server.py --test
+CI=true ./venv/bin/python3 enhanced_dash_server.py --test
 ```
 
 ## 📊 Performance Characteristics
@@ -351,7 +351,7 @@ CI=true python3 enhanced_dash_server.py --test
 ```bash
 # Maximum verbosity
 export DASH_MCP_LOG_LEVEL=DEBUG
-python3 enhanced_dash_server.py --test
+./venv/bin/python3 enhanced_dash_server.py --test
 
 # View detection phase logs
 grep "Phase [1-8]" ~/.cache/dash-mcp/server.log
@@ -372,26 +372,26 @@ grep "Environment summary" ~/.cache/dash-mcp/server.log
 env | grep -E "(CI|AUTOMATION|BATCH|HEADLESS|CONTAINER)"
 
 # Check TTY status
-python3 -c "import sys; print(f'stdin: {sys.stdin.isatty()}, stdout: {sys.stdout.isatty()}, stderr: {sys.stderr.isatty()}')"
+python -c "import sys; print(f'stdin: {sys.stdin.isatty()}, stdout: {sys.stdout.isatty()}, stderr: {sys.stderr.isatty()}')"
 
 # Check terminal type
 echo "TERM='$TERM'"
 
 # Force interactive mode for testing
-FORCE_INTERACTIVE=true python3 enhanced_dash_server.py --test
+FORCE_INTERACTIVE=true ./venv/bin/python3 enhanced_dash_server.py --test
 ```
 
 #### "Server should be non-interactive but appears interactive"
 
 ```bash
 # Set explicit automation mode
-CLI=true python3 enhanced_dash_server.py --test
+CLI=true ./venv/bin/python3 enhanced_dash_server.py --test
 
 # Check for missing environment variables
 echo "Missing CI variable - consider setting CI=true"
 
 # Verify stream redirection
-echo "test" | python3 enhanced_dash_server.py --test
+echo "test" | ./venv/bin/python3 enhanced_dash_server.py --test
 ```
 
 ### Log Analysis Patterns
@@ -503,4 +503,3 @@ DASH_MCP_DETECTION_RULES=/path/to/custom/rules.yaml  # Custom detection rules
 ---
 
 **For questions or issues with automation detection, please check the logs first, then open a GitHub issue with the relevant log entries and environment details.**
-

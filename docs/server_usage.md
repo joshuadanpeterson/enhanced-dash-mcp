@@ -1,14 +1,20 @@
 # Running the Enhanced Dash MCP Server
 
 The server communicates over standard input and output. It uses the
-`stdio_server` context manager from the MCP library to expose its streams
-for MCP clients. An asynchronous `main` coroutine obtains these streams and
-wires them to `server.run` using `asyncio.run`.
+`stdio_server` context manager from the MCP library to expose its streams for
+MCP clients. An asynchronous `main` coroutine obtains these streams and wires
+them to `server.run` using `asyncio.run`.
+
+Version 2 is an augmentation layer around the official Dash MCP. Use official
+Dash MCP tools to list installed docsets, search documentation, enable FTS, and
+load pages. Use Enhanced Dash MCP to analyze a repo, recommend docsets, plan
+official `search_documentation` calls, rank official results, summarize
+coverage, and explain missing/local-only docsets.
 
 Example:
 
 ```bash
-python3 enhanced_dash_server.py
+./venv/bin/python3 enhanced_dash_server.py
 ```
 
 This invocation wires the server to STDIO internally and requires no
@@ -35,6 +41,9 @@ initialization data.
 Logs are stored in `~/.cache/dash-mcp/server.log` with rotation.
 Set `DASH_MCP_LOG_LEVEL` to control verbosity or `DASH_MCP_LOG_FILE`
 to change the path.
+The persistent metadata index is stored at
+`~/.cache/dash-mcp/docset-index-v2.json` and can be overridden with
+`DASH_MCP_INDEX_PATH`.
 Set `DASH_DOCSETS_PATH` only if your Dash documentation lives outside the default path.
 Symlinks under `~/Library/Application Support/Dash` are followed automatically.
 If the variable points at the `Dash` directory rather than `DocSets`, the server
@@ -43,3 +52,17 @@ Docsets stored in subfolders are detected as well, enabling support for Dash 4's
 layout where docsets can be nested within categories.
 The log will record startup, shutdown, and unexpected error messages so you can
 confirm the server launched correctly and diagnose failures.
+
+## v2 Tools
+
+- `analyze_project_docs_context`
+- `recommend_dash_docsets`
+- `plan_dash_searches`
+- `rank_dash_results`
+- `summarize_docset_coverage`
+- `suggest_offline_docs_for_repo`
+- `explain_missing_docsets`
+
+All tools return a `dash-augmentation/v1` envelope. When callers pass an
+official Dash `list_installed_docsets` snapshot, Enhanced Dash attaches exact
+official identifiers for handoff to `search_documentation`.
