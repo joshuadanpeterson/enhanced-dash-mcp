@@ -1,9 +1,7 @@
 name: Update Changelog
 
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch:
 
 jobs:
   build:
@@ -19,7 +17,8 @@ jobs:
       - name: Install changelog generator
         run: npm install -g conventional-changelog-cli
       - name: Generate CHANGELOG
-        # Append new release notes without rewriting existing history
+        # Manual-only: the generator prepends anonymous releases when no tag is
+        # available, so keep the curated changelog out of the push path.
         run: conventional-changelog -p angular -i CHANGELOG.md -s -r 1
       - name: Commit changes
         run: |
