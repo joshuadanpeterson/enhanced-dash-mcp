@@ -50,8 +50,8 @@ async def dummy_stdio_server(raise_interrupt: bool = False):  # pragma: no cover
 
 
 @pytest.mark.asyncio
-async def test_main_handles_cancelled(monkeypatch, stub_modules) -> None:
-    """Main should exit cleanly when cancelled."""
+async def test_amain_handles_cancelled(monkeypatch, stub_modules) -> None:
+    """The async server runner should exit cleanly when cancelled."""
     stub_server = stub_modules["mcp.server"]
     stub_server.Server = DummyServer  # type: ignore[attr-defined]
 
@@ -59,12 +59,12 @@ async def test_main_handles_cancelled(monkeypatch, stub_modules) -> None:
     assert spec and spec.loader
     srv_mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(srv_mod)
-    main = srv_mod.main
+    amain = srv_mod.amain
 
     monkeypatch.setattr(srv_mod, "stdio_server", dummy_stdio_server)
     monkeypatch.setattr(srv_mod, "server", type("dummy", (), {"run": DummyServer().run})())
 
-    task = asyncio.create_task(main())
+    task = asyncio.create_task(amain())
     await asyncio.sleep(0.1)
     task.cancel()
     result = await task

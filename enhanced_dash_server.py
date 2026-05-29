@@ -1775,7 +1775,7 @@ async def _cancel_task(task: asyncio.Task[Any]) -> None:
         await task
 
 
-async def main() -> None:
+async def amain() -> None:
     """Run the server with STDIO streams and handle cancellation."""
     logger.info("Enhanced Dash MCP server starting (logs: %s)", LOG_FILE)
     interactive = is_interactive_mode()
@@ -1804,6 +1804,11 @@ async def main() -> None:
             logger.info("Enhanced Dash MCP server stopped (was running in %s mode)", mode)
 
 
+def main() -> None:
+    """Console script entry point."""
+    asyncio.run(amain())
+
+
 if __name__ == "__main__":
     if len(sys.argv) > 1 and sys.argv[1] == "--test":
         print("Enhanced Dash MCP Server - Test Mode")
@@ -1827,4 +1832,4 @@ if __name__ == "__main__":
             print(f"Server test failed: {exc}")
             sys.exit(1)
 
-    asyncio.run(main())
+    main()
